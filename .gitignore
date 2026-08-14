@@ -1,0 +1,10 @@
+# 构建产物
+.build/
+dist/
+*.zip
+
+# 本地签名身份（含私钥，绝不提交）
+.sign/
+
+# macOS
+.DS_Store
