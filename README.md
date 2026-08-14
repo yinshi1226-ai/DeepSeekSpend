@@ -34,8 +34,8 @@ macOS 菜单栏实时消费显示器：**DeepSeek Harness 的消费金额** + **
 ### 方式二：源码构建
 
 ```bash
-git clone <本仓库>
-cd deepseek-spend
+git clone https://github.com/yinshi1226-ai/DeepSeekSpend.git
+cd DeepSeekSpend
 ./build.sh            # 本机构建；./build.sh release 生成分发 zip
 open ../DeepSeekSpend.app
 ```
