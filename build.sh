@@ -8,7 +8,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"           # DeepSeekSpend 项目目录
 OUT="$ROOT/../DeepSeekSpend.app"                 # 生成的 App 放在「deepseek 消费」文件夹里
 APP_NAME="DeepSeekSpend"
-BUNDLE_ID="com.local.deepseek-spend"
+BUNDLE_ID="com.deepseekspend.menu"
 TMP="$ROOT/.build"
 MODE="${1:-local}"
 

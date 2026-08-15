@@ -6,6 +6,22 @@ import AppKit
 import SwiftUI
 import ServiceManagement
 
+/// 全局 UI 诊断日志（排查状态栏图标问题用）
+func dshUILog(_ msg: String) {
+    let url = FileManager.default.homeDirectoryForCurrentUser
+        .appendingPathComponent("Library/Application Support/DeepSeekSpend/ui.log")
+    let line = "[\(Date())] \(msg)\n"
+    if let data = line.data(using: .utf8) {
+        if let h = try? FileHandle(forWritingTo: url) {
+            h.seekToEndOfFile()
+            h.write(data)
+            try? h.close()
+        } else {
+            try? data.write(to: url)
+        }
+    }
+}
+
 // MARK: - 快照数据模型（与 collector.mjs 输出的 snapshot.json 对应）
 
 struct Snapshot: Decodable {
@@ -238,17 +254,20 @@ final class SpendingModel: ObservableObject {
         }
     }
 
+    var lastLoggedTitle = ""
     func updateStatusTitle() {
         guard let button = statusItem?.button else { return }
         let cost = snapshot?.overall.hour ?? 0
         let text = money(cost)
-        let dot = hasError ? "●" : (hasRunning ? "●" : "●")
-        let dotColor: NSColor = hasError ? .systemOrange : (hasRunning ? .systemGreen : .systemGray)
-        let full = NSMutableAttributedString(string: "\(dot) \(text)")
-        full.addAttribute(.foregroundColor, value: dotColor, range: NSRange(location: 0, length: 1))
-        full.addAttribute(.font, value: NSFont.monospacedDigitSystemFont(ofSize: NSFont.smallSystemFontSize, weight: .regular), range: NSRange(location: 2, length: full.length - 2))
-        button.attributedTitle = full
-        button.toolTip = "DeepSeek 消费｜本自然小时 ¥\(String(format: "%.4f", cost))"
+        // 纯文本标题（排查状态栏图标不显示问题）
+        let plain = "● \(text)"
+        button.title = plain
+        button.toolTip = "DeepSeek 消费｜本自然小时 \(text)（\(hasError ? "异常" : (hasRunning ? "任务运行中" : "空闲"))）"
+        if plain != lastLoggedTitle {
+            lastLoggedTitle = plain
+            let winFrame = button.window?.frame ?? .zero
+            dshUILog("title 更新: [\(plain)] buttonFrame=\(button.frame) windowFrame=\(winFrame)")
+        }
     }
 
     func forceRefresh() {
@@ -783,6 +802,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
         }
 
+        uiLog("didFinishLaunching: item created, button=\(item.button != nil), isVisible=\(item.isVisible), length=\(item.length)")
+
         popover.behavior = .transient
         popover.delegate = self
         popover.contentViewController = NSHostingController(
@@ -792,6 +813,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 
         model.updateStatusTitle()
         model.start()
+    }
+
+    private var lastLoggedTitle = ""
+    func uiLog(_ msg: String) {
+        dshUILog(msg)
     }
 
     @objc private func togglePopover(_ sender: Any?) {
