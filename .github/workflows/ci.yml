@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Collector tests
+        run: npm test
+      - name: Build release app
+        run: ./build.sh release
+      - name: Verify package
+        run: |
+          test -x ../DeepSeekSpend.app/Contents/MacOS/DeepSeekSpend
+          test -x ../DeepSeekSpend.app/Contents/Resources/node
+          test -f ../DeepSeekSpend.app/Contents/Resources/Node-LICENSE
+          test -f ../DeepSeekSpend.app/Contents/Resources/demo-snapshot.json
+          codesign --verify --deep --strict ../DeepSeekSpend.app

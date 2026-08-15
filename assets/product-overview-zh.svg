@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#0F172A" flood-opacity="0.16"/>
+    </filter>
+    <clipPath id="screenClip">
+      <rect x="1078" y="132" width="398" height="592" rx="24"/>
+    </clipPath>
+  </defs>
+
+  <rect width="1600" height="900" fill="#FFFFFF"/>
+  <rect x="0" y="0" width="18" height="900" fill="#1E3A8A"/>
+
+  <text x="84" y="78" fill="#2563EB" font-family="PingFang SC, Helvetica Neue, Arial, sans-serif" font-size="22" font-weight="700" letter-spacing="2">DEEPSEEK HARNESS 本地消费面板</text>
+  <text x="84" y="145" fill="#0F172A" font-family="PingFang SC, Helvetica Neue, Arial, sans-serif" font-size="46" font-weight="700">每小时花了多少，具体花在哪个任务</text>
+  <text x="84" y="192" fill="#64748B" font-family="PingFang SC, Helvetica Neue, Arial, sans-serif" font-size="24">从本地 trace 汇总项目与任务，减少“用完以后才知道”的盲区</text>
+
+  <line x1="84" y1="236" x2="934" y2="236" stroke="#CBD5E1" stroke-width="2"/>
+
+  <rect x="84" y="278" width="830" height="116" rx="18" fill="#F8FAFC" stroke="#E2E8F0"/>
+  <rect x="84" y="278" width="8" height="116" rx="4" fill="#1E3A8A"/>
+  <text x="122" y="322" fill="#0F172A" font-family="PingFang SC, Helvetica Neue, Arial, sans-serif" font-size="27" font-weight="700">01  自然小时与 24 小时趋势</text>
+  <text x="122" y="361" fill="#475569" font-family="PingFang SC, Helvetica Neue, Arial, sans-serif" font-size="20">当前小时、今日、累计金额放在同一视图，柱状图可定位高消费时段</text>
+
+  <rect x="84" y="418" width="830" height="116" rx="18" fill="#F8FAFC" stroke="#E2E8F0"/>
+  <rect x="84" y="418" width="8" height="116" rx="4" fill="#2563EB"/>
+  <text x="122" y="462" fill="#0F172A" font-family="PingFang SC, Helvetica Neue, Arial, sans-serif" font-size="27" font-weight="700">02  项目与任务拆分</text>
+  <text x="122" y="501" fill="#475569" font-family="PingFang SC, Helvetica Neue, Arial, sans-serif" font-size="20">按项目查看实时和累计估算，并可展开到任务、模型与 token 构成</text>
+
+  <rect x="84" y="558" width="830" height="116" rx="18" fill="#F8FAFC" stroke="#E2E8F0"/>
+  <rect x="84" y="558" width="8" height="116" rx="4" fill="#60A5FA"/>
+  <text x="122" y="602" fill="#0F172A" font-family="PingFang SC, Helvetica Neue, Arial, sans-serif" font-size="27" font-weight="700">03  本地优先，边界写清楚</text>
+  <text x="122" y="641" fill="#475569" font-family="PingFang SC, Helvetica Neue, Arial, sans-serif" font-size="20">消费来自本地日志估算；余额查询仅访问 DeepSeek 官方接口，不上传遥测</text>
+
+  <rect x="84" y="714" width="830" height="82" rx="18" fill="#EFF6FF"/>
+  <text x="116" y="748" fill="#1E3A8A" font-family="PingFang SC, Helvetica Neue, Arial, sans-serif" font-size="18" font-weight="700">发布截图已脱敏</text>
+  <text x="116" y="777" fill="#334155" font-family="PingFang SC, Helvetica Neue, Arial, sans-serif" font-size="18">项目名、金额、余额、调用次数均为匿名演示数据 · 不代替官方账单</text>
+
+  <rect x="1016" y="92" width="520" height="686" rx="34" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="2"/>
+  <rect x="1078" y="132" width="398" height="592" rx="24" fill="#FFFFFF" filter="url(#shadow)"/>
+  <image href="app-demo.png" x="1078" y="132" width="398" height="592" preserveAspectRatio="xMidYMid meet" clip-path="url(#screenClip)"/>
+  <circle cx="1236" cy="752" r="5" fill="#2563EB"/>
+  <text x="1252" y="759" fill="#64748B" font-family="PingFang SC, Helvetica Neue, Arial, sans-serif" font-size="18">匿名演示模式</text>
+
+  <text x="84" y="858" fill="#94A3B8" font-family="PingFang SC, Helvetica Neue, Arial, sans-serif" font-size="16">DeepSeekSpend · v1.1.0 · Apple silicon · macOS 13+</text>
+</svg>

@@ -1,0 +1,114 @@
+{
+  "generatedAt": 0,
+  "hourStart": 0,
+  "overall": { "hour": 0.86, "today": 6.42, "total": 37.63 },
+  "hourly": [
+    { "start": -18000000, "cost": 0.18 },
+    { "start": -14400000, "cost": 0.42 },
+    { "start": -10800000, "cost": 0.21 },
+    { "start": -7200000, "cost": 0.67 },
+    { "start": -3600000, "cost": 0.35 },
+    { "start": 0, "cost": 0.86 }
+  ],
+  "tasks": [
+    {
+      "key": "demo-task-1",
+      "name": "整理产品说明",
+      "project": "产品发布",
+      "cwd": null,
+      "running": true,
+      "hour": 0.61,
+      "today": 3.24,
+      "total": 22.79,
+      "sessionCount": 3,
+      "subCount": 2,
+      "model": "deepseek-v4-pro",
+      "tokens": { "input": 345000, "output": 82000, "cacheRead": 1140000 },
+      "lastEventAt": null
+    },
+    {
+      "key": "demo-task-2",
+      "name": "修复构建流程",
+      "project": "自动化工具",
+      "cwd": null,
+      "running": false,
+      "hour": 0.25,
+      "today": 1.86,
+      "total": 9.16,
+      "sessionCount": 1,
+      "subCount": 0,
+      "model": "deepseek-v4-flash",
+      "tokens": { "input": 280000, "output": 46000, "cacheRead": 760000 },
+      "lastEventAt": null
+    }
+  ],
+  "projects": [
+    {
+      "cwd": null,
+      "name": "产品发布",
+      "hour": 0.61,
+      "today": 3.24,
+      "total": 22.79,
+      "running": true,
+      "sessionCount": 3,
+      "lastEventAt": null,
+      "tasks": [
+        {
+          "key": "demo-task-1",
+          "name": "整理产品说明",
+          "running": true,
+          "hour": 0.61,
+          "today": 3.24,
+          "total": 22.79,
+          "sessionCount": 3,
+          "subCount": 2,
+          "model": "deepseek-v4-pro",
+          "tokens": { "input": 345000, "output": 82000, "cacheRead": 1140000 },
+          "lastEventAt": null
+        }
+      ]
+    },
+    {
+      "cwd": null,
+      "name": "自动化工具",
+      "hour": 0.25,
+      "today": 1.86,
+      "total": 9.16,
+      "running": false,
+      "sessionCount": 1,
+      "lastEventAt": null,
+      "tasks": [
+        {
+          "key": "demo-task-2",
+          "name": "修复构建流程",
+          "running": false,
+          "hour": 0.25,
+          "today": 1.86,
+          "total": 9.16,
+          "sessionCount": 1,
+          "subCount": 0,
+          "model": "deepseek-v4-flash",
+          "tokens": { "input": 280000, "output": 46000, "cacheRead": 760000 },
+          "lastEventAt": null
+        }
+      ]
+    }
+  ],
+  "balance": {
+    "currency": "CNY",
+    "totalBalance": "99.90",
+    "grantedBalance": "0.00",
+    "toppedUpBalance": "99.90",
+    "fetchedAt": null
+  },
+  "balanceError": null,
+  "workbuddy": {
+    "hour": 0.16,
+    "today": 1.32,
+    "total": 4.68,
+    "lastEventAt": 1,
+    "calls": 28
+  },
+  "workbuddyError": null,
+  "errors": []
+}

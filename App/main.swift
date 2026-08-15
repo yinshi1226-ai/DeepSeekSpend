@@ -6,22 +6,6 @@ import AppKit
 import SwiftUI
 import ServiceManagement
 
-/// 全局 UI 诊断日志（排查状态栏图标问题用）
-func dshUILog(_ msg: String) {
-    let url = FileManager.default.homeDirectoryForCurrentUser
-        .appendingPathComponent("Library/Application Support/DeepSeekSpend/ui.log")
-    let line = "[\(Date())] \(msg)\n"
-    if let data = line.data(using: .utf8) {
-        if let h = try? FileHandle(forWritingTo: url) {
-            h.seekToEndOfFile()
-            h.write(data)
-            try? h.close()
-        } else {
-            try? data.write(to: url)
-        }
-    }
-}
-
 // MARK: - 快照数据模型（与 collector.mjs 输出的 snapshot.json 对应）
 
 struct Snapshot: Decodable {
@@ -123,6 +107,11 @@ final class SpendingModel: ObservableObject {
     var hasError: Bool { snapshot?.errors.isEmpty == false || snapshot?.balanceError != nil }
 
     func start() {
+        if CommandLine.arguments.contains("--demo") {
+            loadDemoSnapshot()
+            refreshLaunchAtLoginStatus()
+            return
+        }
         prepareSupportFiles()
         loadConfig()
         refreshLaunchAtLoginStatus()
@@ -134,9 +123,28 @@ final class SpendingModel: ObservableObject {
         readSnapshot()
     }
 
+    private func loadDemoSnapshot() {
+        guard let url = Bundle.main.url(forResource: "demo-snapshot", withExtension: "json"),
+              let data = try? Data(contentsOf: url),
+              var snap = try? JSONDecoder().decode(Snapshot.self, from: data) else {
+            loadError = "匿名演示数据缺失"
+            return
+        }
+        let hour = Date().timeIntervalSince1970 * 1000
+        let hourStart = floor(hour / 3_600_000) * 3_600_000
+        snap.generatedAt = hour
+        snap.hourStart = hourStart
+        for index in snap.hourly.indices {
+            snap.hourly[index].start += hourStart
+        }
+        snapshot = snap
+        loadError = nil
+        updateStatusTitle()
+    }
+
     /// 首次运行时把打包进 Resources 的 collector 和 config 复制到 Application Support。
-    /// collector 始终跟随 App 内版本（内容不同就覆盖）；config 只在缺失时复制，
-    /// 保留用户对价格表等配置的修改。
+    /// collector 始终跟随 App 内版本；配置保留用户的路径和轮询设置，
+    /// 但价格表跟随已核对的应用版本，避免旧版错误单价继续生效。
     func prepareSupportFiles() {
         try? FileManager.default.createDirectory(at: supportDir, withIntermediateDirectories: true)
         guard let resources = Bundle.main.resourceURL else { return }
@@ -150,9 +158,20 @@ final class SpendingModel: ObservableObject {
                 try? FileManager.default.copyItem(at: bundledCollector, to: targetCollector)
             }
         }
-        if !FileManager.default.fileExists(atPath: configPath.path),
-           FileManager.default.fileExists(atPath: bundledConfig.path) {
+        if !FileManager.default.fileExists(atPath: configPath.path) {
             try? FileManager.default.copyItem(at: bundledConfig, to: configPath)
+        } else if let bundledData = try? Data(contentsOf: bundledConfig),
+                  let currentData = try? Data(contentsOf: configPath),
+                  let bundled = try? JSONSerialization.jsonObject(with: bundledData) as? [String: Any],
+                  var current = try? JSONSerialization.jsonObject(with: currentData) as? [String: Any] {
+            current["prices"] = bundled["prices"]
+            current["pricingSource"] = bundled["pricingSource"]
+            current["pricingVerifiedAt"] = bundled["pricingVerifiedAt"]
+            current.removeValue(forKey: "peakEpochIso")
+            current.removeValue(forKey: "peakHoursBeijing")
+            if let merged = try? JSONSerialization.data(withJSONObject: current, options: [.prettyPrinted, .sortedKeys]) {
+                try? merged.write(to: configPath, options: .atomic)
+            }
         }
     }
 
@@ -167,12 +186,17 @@ final class SpendingModel: ObservableObject {
     }
 
     func resolveNode() -> String? {
-        // 1. 构建时写入配置的 node 路径（最可靠）
+        // 1. Release 内置运行时，避免依赖用户机器上的 Node 路径与版本。
+        if let bundled = Bundle.main.resourceURL?.appendingPathComponent("node").path,
+           nodeSupportsZstd(bundled) {
+            return bundled
+        }
+        // 2. 兼容旧版配置中的 node 路径。
         if let baked = config["nodePath"] as? String, !baked.isEmpty,
-           FileManager.default.isExecutableFile(atPath: baked) {
+           nodeSupportsZstd(baked) {
             return baked
         }
-        // 2. 常见安装位置 + DSH 自带运行时（相对用户主目录推导，可移植）
+        // 3. 常见安装位置 + DSH 自带运行时。
         let home = FileManager.default.homeDirectoryForCurrentUser
         let dshRuntimeNode = home
             .appendingPathComponent("Documents/DeepSeek-Harness/.runtime/node/bin/node").path
@@ -182,10 +206,10 @@ final class SpendingModel: ObservableObject {
             "/usr/local/bin/node",
             "/usr/bin/node",
         ]
-        for c in candidates where FileManager.default.isExecutableFile(atPath: c) {
+        for c in candidates where nodeSupportsZstd(c) {
             return c
         }
-        // 3. 兜底：走 shell 的 PATH
+        // 4. 兜底：走 shell 的 PATH。
         let p = Process()
         p.executableURL = URL(fileURLWithPath: "/bin/zsh")
         p.arguments = ["-lc", "command -v node"]
@@ -197,9 +221,25 @@ final class SpendingModel: ObservableObject {
             p.waitUntilExit()
             let out = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)?
                 .trimmingCharacters(in: .whitespacesAndNewlines)
-            if let out, p.terminationStatus == 0, !out.isEmpty { return out }
+            if let out, p.terminationStatus == 0, nodeSupportsZstd(out) { return out }
         } catch {}
         return nil
+    }
+
+    private func nodeSupportsZstd(_ path: String) -> Bool {
+        guard FileManager.default.isExecutableFile(atPath: path) else { return false }
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: path)
+        p.arguments = ["-e", "require('node:zlib').zstdDecompressSync"]
+        p.standardOutput = Pipe()
+        p.standardError = Pipe()
+        do {
+            try p.run()
+            p.waitUntilExit()
+            return p.terminationStatus == 0
+        } catch {
+            return false
+        }
     }
 
     func startCollector() {
@@ -254,20 +294,14 @@ final class SpendingModel: ObservableObject {
         }
     }
 
-    var lastLoggedTitle = ""
     func updateStatusTitle() {
         guard let button = statusItem?.button else { return }
         let cost = snapshot?.overall.hour ?? 0
         let text = money(cost)
-        // 纯文本标题（排查状态栏图标不显示问题）
+        // 纯文本标题避免 macOS 沿用旧状态栏图标的隐藏布局。
         let plain = "● \(text)"
         button.title = plain
         button.toolTip = "DeepSeek 消费｜本自然小时 \(text)（\(hasError ? "异常" : (hasRunning ? "任务运行中" : "空闲"))）"
-        if plain != lastLoggedTitle {
-            lastLoggedTitle = plain
-            let winFrame = button.window?.frame ?? .zero
-            dshUILog("title 更新: [\(plain)] buttonFrame=\(button.frame) windowFrame=\(winFrame)")
-        }
     }
 
     func forceRefresh() {
@@ -791,6 +825,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     private let model = SpendingModel()
     private var statusItem: NSStatusItem?
     private let popover = NSPopover()
+    private var demoWindow: NSWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -802,8 +837,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
         }
 
-        uiLog("didFinishLaunching: item created, button=\(item.button != nil), isVisible=\(item.isVisible), length=\(item.length)")
-
         popover.behavior = .transient
         popover.delegate = self
         popover.contentViewController = NSHostingController(
@@ -813,11 +846,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 
         model.updateStatusTitle()
         model.start()
+        if CommandLine.arguments.contains("--show-window") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+                self?.showDemoWindow()
+            }
+        }
     }
 
-    private var lastLoggedTitle = ""
-    func uiLog(_ msg: String) {
-        dshUILog(msg)
+    private func showDemoWindow() {
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 376, height: 560),
+            styleMask: [.titled, .closable, .miniaturizable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "DeepSeek 消费"
+        window.level = .floating
+        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        window.contentViewController = NSHostingController(
+            rootView: MenuView(model: model)
+                .environment(\.font, .system(size: 12))
+                .frame(width: 376, height: 560)
+        )
+        window.center()
+        let controller = NSWindowController(window: window)
+        demoWindow = controller
+        controller.showWindow(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        window.makeKeyAndOrderFront(nil)
+        window.orderFrontRegardless()
     }
 
     @objc private func togglePopover(_ sender: Any?) {
@@ -841,5 +898,5 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 let app = NSApplication.shared
 let delegate = AppDelegate()
 app.delegate = delegate
-app.setActivationPolicy(.accessory)
+app.setActivationPolicy(CommandLine.arguments.contains("--show-window") ? .regular : .accessory)
 app.run()

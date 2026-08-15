@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#0F172A" flood-opacity="0.16"/>
+    </filter>
+    <clipPath id="screenClip">
+      <rect x="1078" y="132" width="398" height="592" rx="24"/>
+    </clipPath>
+  </defs>
+
+  <rect width="1600" height="900" fill="#FFFFFF"/>
+  <rect x="0" y="0" width="18" height="900" fill="#1E3A8A"/>
+
+  <text x="84" y="78" fill="#2563EB" font-family="Helvetica Neue, Arial, sans-serif" font-size="21" font-weight="700" letter-spacing="2">LOCAL COST PANEL FOR DEEPSEEK HARNESS</text>
+  <text x="84" y="145" fill="#0F172A" font-family="Helvetica Neue, Arial, sans-serif" font-size="41" font-weight="700">See the hourly cost—and which task spent it</text>
+  <text x="84" y="192" fill="#64748B" font-family="Helvetica Neue, Arial, sans-serif" font-size="22">Summarize local traces by project and task before usage becomes a surprise</text>
+
+  <line x1="84" y1="236" x2="934" y2="236" stroke="#CBD5E1" stroke-width="2"/>
+
+  <rect x="84" y="278" width="830" height="116" rx="18" fill="#F8FAFC" stroke="#E2E8F0"/>
+  <rect x="84" y="278" width="8" height="116" rx="4" fill="#1E3A8A"/>
+  <text x="122" y="322" fill="#0F172A" font-family="Helvetica Neue, Arial, sans-serif" font-size="26" font-weight="700">01  Natural-hour totals and a 24-hour trend</text>
+  <text x="122" y="361" fill="#475569" font-family="Helvetica Neue, Arial, sans-serif" font-size="19">Current hour, today, and lifetime estimates with clickable hourly bars</text>
+
+  <rect x="84" y="418" width="830" height="116" rx="18" fill="#F8FAFC" stroke="#E2E8F0"/>
+  <rect x="84" y="418" width="8" height="116" rx="4" fill="#2563EB"/>
+  <text x="122" y="462" fill="#0F172A" font-family="Helvetica Neue, Arial, sans-serif" font-size="26" font-weight="700">02  Project and task breakdown</text>
+  <text x="122" y="501" fill="#475569" font-family="Helvetica Neue, Arial, sans-serif" font-size="19">Open a project to inspect task, model, and token-level composition</text>
+
+  <rect x="84" y="558" width="830" height="116" rx="18" fill="#F8FAFC" stroke="#E2E8F0"/>
+  <rect x="84" y="558" width="8" height="116" rx="4" fill="#60A5FA"/>
+  <text x="122" y="602" fill="#0F172A" font-family="Helvetica Neue, Arial, sans-serif" font-size="26" font-weight="700">03  Local-first, with explicit boundaries</text>
+  <text x="122" y="641" fill="#475569" font-family="Helvetica Neue, Arial, sans-serif" font-size="19">Costs are estimated locally; balance lookup calls only DeepSeek's official API</text>
+
+  <rect x="84" y="714" width="830" height="82" rx="18" fill="#EFF6FF"/>
+  <text x="116" y="748" fill="#1E3A8A" font-family="Helvetica Neue, Arial, sans-serif" font-size="18" font-weight="700">ANONYMIZED RELEASE SCREENSHOT</text>
+  <text x="116" y="777" fill="#334155" font-family="Helvetica Neue, Arial, sans-serif" font-size="17">Project names, costs, balance, and call counts are demo data · Not an official bill</text>
+
+  <rect x="1016" y="92" width="520" height="686" rx="34" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="2"/>
+  <rect x="1078" y="132" width="398" height="592" rx="24" fill="#FFFFFF" filter="url(#shadow)"/>
+  <image href="app-demo.png" x="1078" y="132" width="398" height="592" preserveAspectRatio="xMidYMid meet" clip-path="url(#screenClip)"/>
+  <circle cx="1214" cy="752" r="5" fill="#2563EB"/>
+  <text x="1230" y="759" fill="#64748B" font-family="Helvetica Neue, Arial, sans-serif" font-size="18">Anonymous demo mode</text>
+
+  <text x="84" y="858" fill="#94A3B8" font-family="Helvetica Neue, Arial, sans-serif" font-size="16">DeepSeekSpend · v1.1.0 · Apple silicon · macOS 13+</text>
+</svg>

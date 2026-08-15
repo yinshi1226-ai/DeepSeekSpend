@@ -47,11 +47,6 @@ function localDayStart(tsMs) {
   return d.getTime()
 }
 
-/** 北京时间的“小时”（用于峰谷时段判断），返回 0-23 */
-function beijingHour(tsMs) {
-  return new Date(tsMs + 8 * 3600_000).getUTCHours()
-}
-
 /** 读取 YAML 格式的 credentials 文件中的 DEEPSEEK_API_KEY（宽松解析，仅取这一行） */
 function readApiKey(filePath) {
   try {
@@ -110,7 +105,7 @@ function decodeLogFile(filePath) {
  * 把日志文本解析成紧凑事件数组。
  * 只保留我们需要的信息：usage / 模型选择 / 会话头 / 标题。
  */
-function parseEvents(text) {
+export function parseEvents(text) {
   const lines = text.split('\n')
   const events = []
   let firstUserText = null
@@ -385,18 +380,8 @@ function updateWorkbuddyTraces(cfg) {
  * DSH 日志中 inputTokens 已扣除缓存命中部分（cacheReadTokens），
  * outputTokens 已包含思考（reasoningTokens），因此三部分直接乘单价即可。
  */
-function costForCall(tok, model, timeMs, cfg) {
-  const peakEpoch = new Date(cfg.peakEpochIso).getTime()
-  if (Number.isFinite(peakEpoch) && timeMs >= peakEpoch) {
-    const tier = cfg.prices.peakOffPeak && cfg.prices.peakOffPeak[model]
-    if (tier) {
-      const h = beijingHour(timeMs)
-      const isPeak = (cfg.peakHoursBeijing || []).some(([s, e]) => h >= s && h < e)
-      const p = isPeak ? tier.peak : tier.offPeak
-      return (tok.inputTokens * p.miss + tok.cacheReadTokens * p.hit + tok.outputTokens * p.out) / 1_000_000
-    }
-  }
-  const p = (cfg.prices.flat && cfg.prices.flat[model]) || (cfg.prices.flat && cfg.prices.flat['deepseek-v4-pro'])
+export function costForCall(tok, model, _timeMs, cfg) {
+  const p = cfg.prices.flat && cfg.prices.flat[model]
   if (!p) return 0
   return (tok.inputTokens * p.miss + tok.cacheReadTokens * p.hit + tok.outputTokens * p.out) / 1_000_000
 }
@@ -492,7 +477,8 @@ function scanSessionFiles(cfg) {
 // 主循环
 // ---------------------------------------------------------------------------
 
-export async function runOnce(cfg) {  const snapshot = {
+export async function runOnce(cfg) {
+  const snapshot = {
     generatedAt: Date.now(),
     hourStart: localHourStart(Date.now()),
     overall: { hour: 0, today: 0, total: 0 },
@@ -571,6 +557,7 @@ export async function runOnce(cfg) {  const snapshot = {
   const hourNow = snapshot.hourStart
   const dayNow = localDayStart(Date.now())
   const hourlyMap = new Map()
+  const missingPriceModels = new Set()
   const horizon = hourNow - 23 * 3600_000 // 最近 24 个桶
 
   for (const [sessionId, filePath] of files) {
@@ -603,6 +590,7 @@ export async function runOnce(cfg) {  const snapshot = {
     }
     if (model) s.model = model
     const effModel = s.model || cfg.defaultModel || 'deepseek-v4-pro'
+    if (!cfg.prices?.flat?.[effModel]) missingPriceModels.add(effModel)
 
     for (const e of events) {
       if (e.kind !== 'usage' || e.time == null) continue
@@ -620,6 +608,10 @@ export async function runOnce(cfg) {  const snapshot = {
       }
       if (s.lastEventAt == null || e.time > s.lastEventAt) s.lastEventAt = e.time
     }
+  }
+
+  for (const model of [...missingPriceModels].sort()) {
+    snapshot.errors.push(`模型 ${model} 暂无价格，相关调用按 ¥0 估算`)
   }
 
   // 3. 空白会话过滤：DSH 工作区侧边栏不显示的空白会话（blank 标记，
@@ -776,6 +768,7 @@ export async function main() {
     const candidates = [
       cfg.dshDataDir,
       process.env.DSH_HOME,
+      path.join(os.homedir(), 'Library', 'Application Support', 'DeepSeek-Harness', 'data'),
       path.join(os.homedir(), 'Documents', 'DeepSeek-Harness', 'data'),
     ].filter(Boolean)
     let resolved = null
