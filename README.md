@@ -1,75 +1,115 @@
-# DeepSeekSpend 🪙
+<p align="center">
+  <b>简体中文</b> &nbsp;·&nbsp; <a href="README.en.md">English</a>
+</p>
 
-macOS 菜单栏实时消费显示器：**DeepSeek Harness 的消费金额** + **WorkBuddy 绑定的 DeepSeek 用量**。
+# DeepSeekSpend
 
-所有数据都从本机读取（会话日志 / trace 文件），不经过任何第三方服务器。
+<p align="center">
+  <img src="assets/product-overview-zh.png" alt="DeepSeekSpend 功能概览" width="100%">
+</p>
 
-## 功能
+<p align="center">
+  一个放在 macOS 菜单栏里的本地消费面板：查看 DeepSeek Harness 每个自然小时、项目和任务的用量估算。
+</p>
 
-**状态栏**：常驻显示 `● ¥X.XX` —— 本自然小时（如 22:00–23:00）内 DeepSeek Harness 全部任务的总消费。绿点 = 有任务在跑，灰点 = 空闲，橙点 = 有异常。
+<p align="center">
+  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-16A34A?style=flat-square"></a>
+  <img alt="macOS 13+" src="https://img.shields.io/badge/macOS-13%2B-1E3A8A?style=flat-square&logo=apple&logoColor=white">
+  <img alt="Apple silicon" src="https://img.shields.io/badge/Apple%20silicon-arm64-2563EB?style=flat-square">
+  <a href="https://github.com/yinshi1226-ai/DeepSeekSpend/actions"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/yinshi1226-ai/DeepSeekSpend/ci.yml?label=CI&style=flat-square"></a>
+  <a href="https://github.com/yinshi1226-ai/DeepSeekSpend/releases"><img alt="Release" src="https://img.shields.io/github/v/release/yinshi1226-ai/DeepSeekSpend?label=release&style=flat-square"></a>
+</p>
 
-**弹窗**：
+> [!IMPORTANT]
+> 面板金额由本地 token 记录和价格表计算，是便于观察趋势的估算值，不是 DeepSeek 官方账单。充值、余额和最终扣费请以官方平台为准。
 
-- 头部：DeepSeek 账户余额（官方接口，每 5 分钟刷新；点击跳转 DeepSeek 平台查看/充值）
-- 本自然小时总消费大数字 + 今日 / 累计
-- 近 24 小时消费柱状图（点击柱子显示该小时金额）
-- 「DeepSeek 消费」合计行 + 项目明细表：每行项目显示**实时 + 累计**，点击展开任务明细；表头可点击排序（Excel 式，上下箭头指示）
-  - 一个顶层会话 = 一个任务（与 Harness 工作区侧边栏一致），任务派生的子代理（Agent）消费自动归并，不单独成行
-  - 空白会话（无标题无内容）自动过滤，不会出现「未命名任务」
-- WorkBuddy · DeepSeek 用量总览：本小时 / 今日 / 累计 **¥** + 调用次数（只做总览不列明细）
+## 你能看到什么
 
-**计价口径**：`输入(未命中缓存)×输入价 + 缓存命中×缓存命中价 + 输出×输出价`，思考 token 已包含在输出中，与 DeepSeek 账单一致。默认内置 DeepSeek 官方价格表（含 2026-08-17 起生效的峰谷价，按每条记录的时间戳精确计价），可在配置文件中自行修改。
+- 菜单栏常驻显示当前自然小时的消费估算：`● ¥X.XX`。
+- 弹窗汇总本小时、今日和历史累计金额。
+- 近 24 个自然小时柱状图，点击柱子可查看对应小时。
+- 项目列表同时显示实时与累计金额，展开后可看到任务、模型及 token 构成。
+- 顶层任务自动合并其子代理消费，空白会话不进入列表。
+- 单独汇总 WorkBuddy 的 DeepSeek 用量和调用次数。
+- 可选显示 DeepSeek 账户余额；点击后跳转官方平台。
+
+## 界面
+
+<p align="center">
+  <img src="assets/app-demo.png" alt="DeepSeekSpend 匿名演示界面" width="520">
+</p>
+
+截图由内置 `--demo` 模式生成。项目名、金额、余额和调用次数均为演示数据，不包含个人记录。
+
+## 计价口径
+
+```text
+消费估算 = 未命中缓存的输入 token × 输入价
+         + 命中缓存的输入 token × 缓存价
+         + 输出 token × 输出价
+```
+
+默认价格表依据 [DeepSeek 官方定价页](https://api-docs.deepseek.com/zh-cn/quick_start/pricing/) 中的 `deepseek-v4-pro` 与 `deepseek-v4-flash` 人民币价格维护。未知模型不会被悄悄套用其他模型价格，而是计为 0 并在快照错误中提示。
 
 ## 安装
 
-### 方式一：下载 Release（推荐）
+### 下载 Release（推荐）
 
-1. 从 [Releases](../../releases) 下载 `DeepSeekSpend-v*.zip`
-2. 解压，把 `DeepSeekSpend.app` 拖入「应用程序」（或任意位置）
-3. **首次打开**：右键 App → 打开（本地签名的应用，macOS 会要求确认一次）
-4. 可选：弹窗底部打开「开机自启」
+1. 打开 [最新 Release](https://github.com/yinshi1226-ai/DeepSeekSpend/releases/latest)，下载 `DeepSeekSpend-v*-macOS-arm64.zip`。
+2. 解压，把 `DeepSeekSpend.app` 拖到“应用程序”，也可以放在其他固定位置。
+3. 首次启动时右键 App →“打开”，确认运行本地签名应用。
+4. 如有需要，在弹窗底部开启“开机自启”。
 
-要求：macOS 13+（Apple Silicon）。运行依赖 Node.js ≥ 22.15（已安装 DeepSeek Harness 则自带，无需额外安装）。
+Release 已内置兼容的 Node.js 运行时，使用者无需另外安装。当前支持 Apple silicon Mac 和 macOS 13 及以上版本。
 
-### 方式二：源码构建
+### 源码构建
 
 ```bash
 git clone https://github.com/yinshi1226-ai/DeepSeekSpend.git
 cd DeepSeekSpend
-./build.sh            # 本机构建；./build.sh release 生成分发 zip
+npm test
+./build.sh release
 open ../DeepSeekSpend.app
 ```
 
-## 数据来源
+源码构建需要 Swift 工具链和 Node.js 22.15 及以上版本。
 
-| 数据 | 来源 |
-|------|------|
-| DeepSeek Harness 任务与 token 用量 | `~/Documents/DeepSeek-Harness/data/sessions/**/session.jsonl.zstd`（zstd 多帧解压）+ 本地 API `http://127.0.0.1:3080/api/session.list` |
-| DeepSeek 账户余额 | `https://api.deepseek.com/user/balance`（API Key 读取自 Harness 的 `.credentials.yaml`，仅本机使用） |
-| WorkBuddy 的 DeepSeek 用量 | `~/.workbuddy/traces/**/*.json` 中每次 DeepSeek 调用的 token 记录（增量解析 + 本地缓存） |
+## 数据与隐私
 
-数据目录会自动探测（配置文件路径 → `$DSH_HOME` → `~/Documents/DeepSeek-Harness/data`），换机器不用改配置。所有数据只在本机处理，不上传任何内容。
+| 数据 | 本地来源或网络边界 |
+|---|---|
+| Harness 任务与 token | `~/Documents/DeepSeek-Harness/data/sessions/**/session.jsonl.zstd` 与本机 Harness API |
+| 项目运行状态 | `http://127.0.0.1:3080/api/session.list` |
+| WorkBuddy 用量 | `~/.workbuddy/traces/**/*.json` |
+| 账户余额（可选） | API Key 仅用于请求 DeepSeek 官方 `https://api.deepseek.com/user/balance` |
+
+- 任务解析和金额计算在本机完成。
+- 项目名和任务明细不会被发送到第三方服务器。
+- 本项目不包含遥测或广告 SDK。
+- 余额查询会把 Harness 已配置的 API Key 发送给 DeepSeek 官方接口；如果未配置，其他本地统计仍可使用。
+- 应用包采用 ad-hoc 签名，没有创建或安装自签名根证书。
+
+更多边界与漏洞报告方式见 [SECURITY.md](SECURITY.md)。
 
 ## 配置
 
-运行期配置在 `~/Library/Application Support/DeepSeekSpend/config.json`（首次启动自动从 App 内复制，之后保留你的修改）：
+运行期配置位于 `~/Library/Application Support/DeepSeekSpend/config.json`：
 
-- `prices` —— DeepSeek 价格表（元 / 百万 tokens），改了在弹窗点「刷新」生效
-- `apiBase` —— DeepSeek Harness Web 端口
-- `pollIntervalMs` / `balanceIntervalMs` —— 轮询与余额刷新间隔
-- `workbuddyTracesDir` —— WorkBuddy traces 目录（默认 `~/.workbuddy/traces`）
+- `prices`：价格表（元 / 百万 tokens）；
+- `apiBase`：DeepSeek Harness 本地地址；
+- `pollIntervalMs` / `balanceIntervalMs`：采集与余额刷新间隔；
+- `workbuddyTracesDir`：WorkBuddy trace 目录。
 
-## 目录结构
+升级时会保留你的路径和轮询设置，同时更新应用内已核对的官方价格表。
 
+## 开发与验证
+
+```bash
+npm test               # 采集与计价测试
+./build.sh              # 本地构建
+./build.sh release      # 构建 App 和分发 zip
 ```
-├── App/main.swift    Swift 菜单栏界面（AppKit + SwiftUI，无第三方依赖）
-├── collector.mjs     Node 数据采集器（日志解析 + 计价 + 快照）
-├── config.json       默认配置模板
-├── build.sh          构建脚本（local / release 两种模式）
-├── genicon.swift     图标生成
-└── README.md
-```
 
-## 许可
+## License
 
-MIT License，详见 [LICENSE](LICENSE)。
+[MIT](LICENSE)
